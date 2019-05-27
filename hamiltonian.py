@@ -121,8 +121,6 @@ def r2_matrix_element(n,l,ml,ms,n2,l2,ml2,ms2):
   # similar to hydrogen atom's n.
   if (n-l)%2!=0 or (n2-l2)%2!=0:
     return 0.0
-  #if n==n2:
-  #  return n+1.5 # special case for efficiency
   # Beyond this point, we don't look at ms or ms2 anymore, so all spins are integers. Only p is half-integer. d, d2, mu, nu, sigma are integers.
   p = 0.5*(l+l2+3)
   mu = util.to_int(p-l2-0.5)
