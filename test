@@ -22,12 +22,16 @@ def do_tests():
   test_equal(hamiltonian.ln_gamma(7.0),hamiltonian.ln_gamma(8.0)-math.log(7),'Gamma(7)=Gamma*8)/7')
 
   # Clebsch-Gordan
+  # The following are in the form j1,m1,j2,m2,j3,m3.
   # https://en.wikipedia.org/wiki/Clebsch%E2%80%93Gordan_coefficients#Special_cases
   test_equal(hamiltonian.clebsch2(7*2,2*2,7*2,-2*2,0,0),-1.0/math.sqrt(2.0*7+1.0),'<7272|00>=-1/sqrt(2*7+1)')
   test_equal(hamiltonian.clebsch2(7*2,2*2,6*2,-2*2,0,0),0.0,'<7262|00>=0')
+  # The following are in the form <l1 l2 m1 m2 | l3 m3>, integer spins:
+  test_equal(hamiltonian.clebsch(1,2,1,0,1,1),1/math.sqrt(10.0),'<1210|11>=1/sqrt10')
+  test_equal(hamiltonian.clebsch(1,2,0,0,1,0),-math.sqrt(2.0/5.0) ,'<1200|10>=-sqrt(2/5)')
 
   # matrix elements of Y20
-  #test_equal(hamiltonian.y20_matrix_element(1,1,0,1, 1,1,0,1),-math.sqrt(5.0/(4.0*math.pi))/5.0,'<11|Y20|11>=-sqrt(5/4pi)(1/5)') # ECM doc, p. 19
+  test_equal(hamiltonian.y20_matrix_element(1,1,1,1, 1,1,1,1),-math.sqrt(5.0/(4.0*math.pi))/5.0,'<11|Y20|11>=-sqrt(5/4pi)(1/5)') # ECM doc, p. 19
 
 
   # matrix elements of r^2
@@ -57,8 +61,6 @@ def do_tests():
 
 def full_nilsson(n_max,omega,parity,delta,i,nominal_n,th,message):
   result = high_level.do_nilsson(n_max,omega,parity,{'delta':delta})
-  print(result['ham']) # qwe
-  print(result['index']) # qwe
   got = result['evals'][i]-(1.5+nominal_n)
   eta = result['delta']/result['kappa']
   want = th(eta)*result['kappa']
@@ -67,9 +69,12 @@ def full_nilsson(n_max,omega,parity,delta,i,nominal_n,th,message):
 
 def test_equal(x,y,message):
   if abs(x-y)>1.0e-14:
-    print('test failed '+message)
-    print('x=',x)
-    print('y=',y)
-    raise Exception('test failed')
+    print('failed '+message)
+    print('  got ',x)
+    print('  expected ',y)
+    #raise Exception('test failed')
+  else:
+    print('passed: '+message)
+  print("------------------------------------------------------------------")
 
 main()

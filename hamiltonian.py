@@ -102,7 +102,6 @@ def y20_matrix_element(n,l,ml,ms,n2,l2,ml2,ms2):
   Compute the matrix element <l2 ml2 | Y20 | l ml>.
   """
   # https://physics.stackexchange.com/questions/10039/integral-of-the-product-of-three-spherical-harmonics
-  print("entering y20_matrix_element, n,l,ml,ms,n2,l2,ml2,ms2=",n,l,ml,ms," ",n2,l2,ml2,ms2) # qwe
   if not (ml==ml2 and ms==ms2 and abs(l-l2)<=2 and (l-l2)%2==0):
     return 0.0
   # Beyond this point, we don't look at ms or ms2 anymore, so all spins are integers.
@@ -118,7 +117,7 @@ def r2_matrix_element(n,l,ml,ms,n2,l2,ml2,ms2):
   Compute the matrix element <n2 l2 | r^2 | n l>.
   """
   # nuclear.fis.ucm.es/PDFN/documentos/Nilsson_Doct.pdf
-  if ml!=ml2 or ms!=ms2 or (n-n2)%2!=0:
+  if ml!=ml2 or ms!=ms2 or (n-n2)%2!=0 or (n-n2)>2:
     return 0.0
   # If d were a half-integer, then we couldn't have both sigma! and (d-1-sigma)! make sense. This seems to tell me that
   # if N-l isn't even, the matrix element must vanish. This sort of makes sense given UCM's notation lowercase n for my d, probably
