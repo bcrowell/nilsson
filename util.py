@@ -21,6 +21,9 @@ def dict_to_tuple(d): # convert a dictionary with integer keys to a tuple so it 
     a.append(d[i])
   return tuple(a)
   
+def merge_dicts(f,g):
+  return {**f,**g} # merge dictionaries, second one overriding first
+
 def has_integer_value(x):
   """
   Tells whether an int or float has a value that is an integer

@@ -4,29 +4,20 @@
 An implementation of the Nilsson model of nuclear structure for deformed nuclei.
 """
 
-import util
-import hamiltonian
+import util,hamiltonian,high_level
 
 def main():
-  do_nilsson()
+  run_nilsson()
 
-def do_nilsson():
+def run_nilsson():
   n_max = 5
   omega = 7 # 7/2-
   parity = 1
-  space = (n_max,omega,parity)
-  index = hamiltonian.enumerate_states(space) # dictionary mapping from Nilsson quantum numbers to array indices
-  states = util.dict_to_tuple(util.invert_dict(index)) # inverse of index, maps from index to quantum numbers
-  print(index)
-  print(states)
-  n_states = len(states)
-  default_pars = {'kappa':0.06,'mu':0.5,'delta':0.0}
-  user_pars = {'delta':0.2}
-  pars = {**default_pars,**user_pars} # merge dictionaries, second one overriding first
-  ham = hamiltonian.hamiltonian(space,pars,index,states)
-  evals,evecs = hamiltonian.eigen(ham)
+  result = high_level.do_nilsson(n_max,omega,parity,{'delta':0.2})
+  n_states = result['n_states']
+  print(result['index'])
   for i in range(n_states):
-    print(evals[i])
+    print(result['evals'][i])
 
 
 main()

@@ -1,5 +1,7 @@
 """
-Functions for computing the Nilsson Hamiltonian.
+Functions for computing the Nilsson Hamiltonian. As a convention throughout this code (except where noted),
+integer spins are stored as their actual values, while half-integer spins are stored
+as double their actual values.
 """
 
 #-----------------------------------------------------------------------------------------------
@@ -30,7 +32,7 @@ def hamiltonian(space,pars,index,states):
   # 3/2+N, l^2, and spin-orbit terms:
   for i in range(n_states):
     n,l,ml,ms = states[i]
-    ham[i,i] = ham[i,i] + 1.5+n -c2*(l*(l+1)-0.5*n*(n+3)) -c1*ms*ml   # 3/2+N and l^2 terms, plus diagonal part of spin-orbit term
+    ham[i,i] = ham[i,i] + 1.5+n -c2*(l*(l+1)-0.5*n*(n+3)) -c1*ml*(0.5*ms)   # 3/2+N and l^2 terms, plus diagonal part of spin-orbit term
     # off-diagonal part of spin-orbit:
     for j in range(n_states):
       n2,l2,ml2,ms2 = states[j]
@@ -44,15 +46,16 @@ def hamiltonian(space,pars,index,states):
   # deformation term, proportional to r^2 Y20
   def_con = -(4.0/3.0)*math.sqrt(math.pi/5.0)*delta # proportionality constant for this term
   d = deformation_ham(space,states)
-  omega0 = (1-(4.0/3.0)*delta**2-(16.0/27.0)*delta**3)**(-1.0/6.0)
   for i in range(n_states):
     for j in range(n_states):
       ham[i,j] = ham[i,j]+d[i,j]*def_con
-  # ... rescaled from omega00=1 for volume conservation
-  for i in range(n_states):
-    for j in range(n_states):
-      ham[i,j] = ham[i,j]*omega0
   return ham
+
+def delta_to_omega0(delta):
+  """
+  Find value of omega0, rescaled from omega00=1 for volume conservation.
+  """
+  return (1-(4.0/3.0)*delta**2-(16.0/27.0)*delta**3)**(-1.0/6.0)
 
 @Memoize
 def deformation_ham(space,states):
@@ -99,7 +102,8 @@ def y20_matrix_element(n,l,ml,ms,n2,l2,ml2,ms2):
   Compute the matrix element <l2 ml2 | Y20 | l ml>.
   """
   # https://physics.stackexchange.com/questions/10039/integral-of-the-product-of-three-spherical-harmonics
-  if not (ml==ml2 and ms==ms2 and abs(l-l2)<=2 and (l-l2)%2==0 and abs(n-n2)==2):
+  print("entering y20_matrix_element, n,l,ml,ms,n2,l2,ml2,ms2=",n,l,ml,ms," ",n2,l2,ml2,ms2) # qwe
+  if not (ml==ml2 and ms==ms2 and abs(l-l2)<=2 and (l-l2)%2==0):
     return 0.0
   # Beyond this point, we don't look at ms or ms2 anymore, so all spins are integers.
   x = math.sqrt((5.0/(4.0*math.pi)) * ((2*l+1)/(2*l2+1)))
@@ -127,14 +131,11 @@ def r2_matrix_element(n,l,ml,ms,n2,l2,ml2,ms2):
   nu = util.to_int(p-l-0.5)
   d = util.to_int(0.5*(n-l)+1) # UCM's lowercase n
   d2 = util.to_int(0.5*(n2-l2)+1)
-  print("evaluating sum...") # qwe
   sum = 0.0
   for sigma in range(max(0,d2-mu-1,d-nu-1),min(d-1,d2-1)+1): # guess range based on criterion that all 5 inputs to factorials should be >=0
     ln_term = ln_gamma(p+sigma+1)-(ln_fac(sigma)+ln_fac(d2-1-sigma)+ln_fac(d-1-sigma)+ln_fac(sigma+mu-d2+1)+ln_fac(sigma+nu-d+1))
     term = math.exp(ln_term)
-    print("  sigma=",sigma,", term=",term) # qwe
     sum = sum + term
-  print("  sum=",sum) # qwe
   ln_stuff = ln_fac(d2-1)+ln_fac(d-1)-(ln_gamma(d2+l2+0.5)+ln_gamma(d+l+0.5))
   ln_stuff2 = ln_fac(mu)+ln_fac(nu)
   result = sum*math.exp(0.5*ln_stuff+ln_stuff2)

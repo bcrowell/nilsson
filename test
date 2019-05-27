@@ -7,8 +7,7 @@ Test suite.
 import math,numpy,sympy
 from sympy.physics.quantum.cg import CG
 
-import util
-import hamiltonian
+import util,hamiltonian,high_level
 
 def main():
   do_tests()
@@ -28,7 +27,8 @@ def do_tests():
   test_equal(hamiltonian.clebsch2(7*2,2*2,6*2,-2*2,0,0),0.0,'<7262|00>=0')
 
   # matrix elements of Y20
-  # ... no good tests in ECM doc
+  #test_equal(hamiltonian.y20_matrix_element(1,1,0,1, 1,1,0,1),-math.sqrt(5.0/(4.0*math.pi))/5.0,'<11|Y20|11>=-sqrt(5/4pi)(1/5)') # ECM doc, p. 19
+
 
   # matrix elements of r^2
   # Test using some special cases from ECM doc.
@@ -37,6 +37,33 @@ def do_tests():
   test_equal(hamiltonian.r2_matrix_element(2,2,0,1, 2,2,0,1),3.5,'<22|r^2|22>=7/2')
   test_equal(hamiltonian.r2_matrix_element(2,0,0,1, 2,2,0,1),-2*math.sqrt(2.5),'<20|r^2|22>=-2sqrt(2.5)') # ECM's sign seems wrong
   test_equal(hamiltonian.r2_matrix_element(0,0,0,1, 2,0,0,1),-math.sqrt(1.5),'<00|r^2|20>=-sqrt(1.5)')
+
+  # Test runs of the full model. Check against some closed-form results from ECM doc.
+  # Inputs are n_max,Omega*2,parity,{...}.
+
+  delta = 0.01
+  full_nilsson(0,1,0, 0.0,   0,0,(lambda eta : 0.0),         's1/2, no deformation, ground state energy=1.5')
+  full_nilsson(0,1,0, delta, 0,0,(lambda eta : 0.0),         's1/2, ground state energy=1.5')
+  full_nilsson(1,3,1, delta, 0,1,(lambda eta : eta/3.0-1.0), 'p3/2')
+
+
+  result = high_level.do_nilsson(0,1,0,{'delta':delta})
+  print(result['ham'])
+  test_equal(result['evals'][0],1.5,'s1/2, ground state energy=1.5')
+
+  result = high_level.do_nilsson(1,3,1,{'delta':delta})
+  print(result['ham'])
+  test_equal(result['evals'][0],2.5,'p3/2')
+
+def full_nilsson(n_max,omega,parity,delta,i,nominal_n,th,message):
+  result = high_level.do_nilsson(n_max,omega,parity,{'delta':delta})
+  print(result['ham']) # qwe
+  print(result['index']) # qwe
+  got = result['evals'][i]-(1.5+nominal_n)
+  eta = result['delta']/result['kappa']
+  want = th(eta)*result['kappa']
+  test_equal(got,want,message)
+
 
 def test_equal(x,y,message):
   if abs(x-y)>1.0e-14:
