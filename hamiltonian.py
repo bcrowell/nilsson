@@ -114,7 +114,7 @@ def r2_matrix_element(n,l,ml,ms,n2,l2,ml2,ms2):
   Compute the matrix element <n2 l2 | r^2 | n l>.
   """
   # nuclear.fis.ucm.es/PDFN/documentos/Nilsson_Doct.pdf
-  if ml!=ml2 or ms!=ms2 or abs(n-n2)!=0:
+  if ml!=ml2 or ms!=ms2 or (n-n2)%2!=0:
     return 0.0
   # If d were a half-integer, then we couldn't have both sigma! and (d-1-sigma)! make sense. This seems to tell me that
   # if N-l isn't even, the matrix element must vanish. This sort of makes sense given UCM's notation lowercase n for my d, probably
@@ -129,15 +129,21 @@ def r2_matrix_element(n,l,ml,ms,n2,l2,ml2,ms2):
   nu = util.to_int(p-l-0.5)
   d = util.to_int(0.5*(n-l)+1) # UCM's lowercase n
   d2 = util.to_int(0.5*(n2-l2)+1)
+  print("evaluating sum...") # qwe
   sum = 0.0
   for sigma in range(max(0,d2-mu-1,d-nu-1),min(d-1,d2-1)+1): # guess range based on criterion that all 5 inputs to factorials should be >=0
     ln_term = ln_gamma(p+sigma+1)-(ln_fac(sigma)+ln_fac(d2-1-sigma)+ln_fac(d-1-sigma)+ln_fac(sigma+mu-d2+1)+ln_fac(sigma+nu-d+1))
-    sum = sum + math.exp(ln_term)
+    term = math.exp(ln_term)
+    print("  sigma=",sigma,", term=",term) # qwe
+    sum = sum + term
+  print("  sum=",sum) # qwe
   ln_stuff = ln_fac(d2-1)+ln_fac(d-1)-(ln_gamma(d2+l2+0.5)+ln_gamma(d+l+0.5))
   ln_stuff2 = ln_fac(mu)+ln_fac(nu)
   result = sum*math.exp(0.5*ln_stuff+ln_stuff2)
   if (d+d2)%2!=0:
     result = -result
+    # ... Note that this is the only place where a sign can occur. The gamma function inside the sum is always
+    #     positive, because both sigma and p are nonnegative.
   # ECM has a (unitful?) factor of b^2, but doesn't include that factor in their sample expressions for <N|...|N+2>.
   # They define b as sqrt(hbar/m*omega0), so when we compute energies in units of hbar*omega0, this should not be an issue.
   return result
