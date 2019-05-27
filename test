@@ -14,13 +14,34 @@ def main():
   do_tests()
 
 def do_tests():
+  # factorial
   test_equal(math.exp(hamiltonian.ln_fac(0)),1,'0! =1')
   test_equal(math.exp(hamiltonian.ln_fac(1)),1,'1! =1')
   test_equal(math.exp(hamiltonian.ln_fac(4)),24,'4! =24')
+
+  # gamma function
   test_equal(hamiltonian.ln_gamma(7.0),hamiltonian.ln_gamma(8.0)-math.log(7),'Gamma(7)=Gamma*8)/7')
+
+  # Clebsch-Gordan
+  # https://en.wikipedia.org/wiki/Clebsch%E2%80%93Gordan_coefficients#Special_cases
+  test_equal(hamiltonian.clebsch2(7*2,2*2,7*2,-2*2,0,0),-1.0/math.sqrt(2.0*7+1.0),'<7272|00>=-1/sqrt(2*7+1)')
+  test_equal(hamiltonian.clebsch2(7*2,2*2,6*2,-2*2,0,0),0.0,'<7262|00>=0')
+
+  # matrix elements of Y20
+  # ... no good tests in ECM doc
+
+  # matrix elements of r^2
+  # Test using some special cases from ECM doc.
+  test_equal(hamiltonian.r2_matrix_element(0,0,0,1, 0,0,0,1),1.5,'<00|r^2|00>=3/2')
+  test_equal(hamiltonian.r2_matrix_element(2,0,0,1, 2,0,0,1),3.5,'<20|r^2|20>=7/2')
+  test_equal(hamiltonian.r2_matrix_element(2,2,0,1, 2,2,0,1),3.5,'<22|r^2|22>=7/2')
+  test_equal(hamiltonian.r2_matrix_element(2,0,0,1, 2,2,0,1),2*math.sqrt(2.5),'<20|r^2|22>=2sqrt(2.5)') # lowercase n=d=1?; ambiguous which n they mean
 
 def test_equal(x,y,message):
   if abs(x-y)>1.0e-14:
-    raise Exception('test failed '+message)
+    print('test failed '+message)
+    print('x=',x)
+    print('y=',y)
+    raise Exception('test failed')
 
 main()

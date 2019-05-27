@@ -27,3 +27,9 @@ def has_integer_value(x):
   """
   # https://stackoverflow.com/a/9266979/1142217
   return isinstance(x, int) or x.is_integer()
+
+def to_int(x):
+  if has_integer_value(x):
+    return int(x)
+  else:
+    raise Exception('non-integer value in to_int(): ',x)
