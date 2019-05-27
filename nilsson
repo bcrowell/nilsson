@@ -1,0 +1,35 @@
+#!/usr/bin/python3
+
+"""
+An implementation of the Nilsson model of nuclear structure for deformed nuclei.
+"""
+
+import math,numpy,sympy
+from sympy.physics.quantum.cg import CG
+
+import util
+import hamiltonian
+
+def main():
+  do_nilsson()
+
+def do_nilsson():
+  n_max = 5
+  omega = 7 # 7/2-
+  parity = 1
+  space = (n_max,omega,parity)
+  index = hamiltonian.enumerate_states(space) # dictionary mapping from Nilsson quantum numbers to array indices
+  states = util.dict_to_tuple(util.invert_dict(index)) # inverse of index, maps from index to quantum numbers
+  print(index)
+  print(states)
+  n_states = len(states)
+  default_pars = {'kappa':0.06,'mu':0.5,'delta':0.0}
+  user_pars = {'delta':0.2}
+  pars = {**default_pars,**user_pars} # merge dictionaries, second one overriding first
+  ham = hamiltonian.hamiltonian(space,pars,index,states)
+  evals,evecs = hamiltonian.eigen(ham)
+  for i in range(n_states):
+    print(evals[i])
+
+
+main()

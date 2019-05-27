@@ -1,37 +1,22 @@
-#!/usr/bin/python3
+"""
+Functions for computing the Nilsson Hamiltonian.
+"""
 
-"""
-An implementation of the Nilsson model of nuclear structure for deformed nuclei.
-"""
+#-----------------------------------------------------------------------------------------------
 
 import math,numpy,sympy
 from sympy.physics.quantum.cg import CG
 
-def main():
-  do_nilsson()
+import util
+from util import Memoize
 
-def do_nilsson():
-  n_max = 5
-  omega = 7 # 7/2-
-  parity = 1
-  space = (n_max,omega,parity)
-  index = enumerate_states(space) # dictionary mapping from Nilsson quantum numbers to array indices
-  states = {v: k for k, v in index.items()} # inverse dictionary, maps from index to quantum numbers
-  print(index)
-  print(states)
-  n_states = len(states)
-  default_pars = {'kappa':0.06,'mu':0.5,'delta':0.0}
-  user_pars = {'delta':0.2}
-  pars = {**default_pars,**user_pars} # merge dictionaries, second one overriding first
-  ham = hamiltonian(space,pars,index,states)
-  evals,evecs = eigen(ham)
-  for i in range(n_states):
-    print(evals[i])
+#-----------------------------------------------------------------------------------------------
 
 def hamiltonian(space,pars,index,states):
   """
   Returns the Hamiltonian matrix, with matrix elements in units of omega00 (not omega0, which has a second-order dependence
-  on deformation).
+  on deformation). When running a series of calculations with different deformations, some of the more computationally expensive
+  parts of this calculation will automatically be memoized.
   """
   n_max,omega,parity = space
   kappa = pars['kappa']
@@ -56,8 +41,27 @@ def hamiltonian(space,pars,index,states):
       for sign in range(-1,1+1,2):
         if ml+sign==ml2 and ms==-sign and ms2==sign:
           ham[i,j] = ham[i,j]+0.5*math.sqrt((l-sign*ml)*(l+sign*ml+1))
-  # deformation term:
-  def_con = -(4.0/3.0)*math.sqrt(math.pi/5.0)*delta # proportionality constant for r^2Y20 term
+  # deformation term, proportional to r^2 Y20
+  def_con = -(4.0/3.0)*math.sqrt(math.pi/5.0)*delta # proportionality constant for this term
+  d = deformation_ham(space,states)
+  omega0 = (1-(4.0/3.0)*delta**2-(16.0/27.0)*delta**3)**(-1.0/6.0)
+  for i in range(n_states):
+    for j in range(n_states):
+      ham[i,j] = ham[i,j]+d[i,j]*def_con
+  # ... rescaled from omega00=1 for volume conservation
+  for i in range(n_states):
+    for j in range(n_states):
+      ham[i,j] = ham[i,j]*omega0
+  return ham
+
+@Memoize
+def deformation_ham(space,states):
+  """
+  Computes the term in the Hamiltonian that represents the deformation, not including scalar factors. This is a separate function so
+  that it can be memoized. When running a series of calculations with different deformations, this doesn't need to be recomputed.
+  """
+  n_states = len(states)
+  ham = numpy.zeros(shape=(n_states,n_states))
   for i in range(n_states):
     n,l,ml,ms = states[i]
     for j in range(n_states):
@@ -68,11 +72,6 @@ def hamiltonian(space,pars,index,states):
         # ... I assume multiplying these is the right thing to do, since the integrals are separable,
         ham[i,j] = ham[i,j] + z
         ham[j,i] = ham[j,i] + z
-  omega0 = (1-(4.0/3.0)*delta**2-(16.0/27.0)*delta**3)**(-1.0/6.0)
-  # ... rescaled from omega00=1 for volume conservation
-  for i in range(n_states):
-    for j in range(n_states):
-      ham[i,j] = ham[i,j]*omega0
   return ham
 
 def enumerate_states(space):
@@ -94,6 +93,7 @@ def enumerate_states(space):
             i = i+1
   return index
 
+@Memoize
 def y20_matrix_element(n,l,ml,ms,n2,l2,ml2,ms2):
   """
   Compute the matrix element <l2 ml2 | Y20 | l ml>.
@@ -108,6 +108,7 @@ def y20_matrix_element(n,l,ml,ms,n2,l2,ml2,ms2):
   x = x*clebsch(l,2,ml,0,l2,ml2)*clebsch(l,2,0,0,l2,0)
   return x
 
+@Memoize
 def r2_matrix_element(n,l,ml,ms,n2,l2,ml2,ms2):
   """
   Compute the matrix element <n2 l2 | r^2 | n l>.
@@ -136,13 +137,22 @@ def r2_matrix_element(n,l,ml,ms,n2,l2,ml2,ms2):
   # They define b as sqrt(hbar/m*omega0), so when we compute energies in units of hbar*omega0, this should not be an issue.
   return result
 
+@Memoize
 def ln_fac(n):
+  # The following checks should only cause exceptions if there's an error in my algorithms. However, they have
+  # little run-time cost because this gets memoized.
+  if n<0:
+    raise Exception('negative input in ln_fac')
+  if not util.has_integer_value(n): 
+    raise Exception('negative input in ln_fac')
   return scipy.special.gammaln(n+1)
 
+@Memoize
 def ln_gamma(x):
   # make a separate function so we can memoize it
   return scipy.special.gammaln(x)
 
+@Memoize
 def clebsch(l1,l2,ml1,ml2,l3,ml3):
   """
   Computes < l1 l2 ml1 ml2 | l3 ml3>, where all spins are integers (no half-integer spins allowed).
@@ -171,23 +181,3 @@ def clebsch2(j1,m1,j2,m2,j3,m3):
   # numerical routine for this that was licensed appropriately and packaged for ubuntu.
   # Performance is actually fine, because this is memoized. We take a ~1 second hit in startup time just from loading sympy.
   return CG(sympy.S(j1)/2,sympy.S(m1)/2,sympy.S(j2)/2,sympy.S(m2)/2,sympy.S(j3)/2,sympy.S(m3)/2).doit().evalf()
-
-class Memoize: 
-  # https://stackoverflow.com/a/1988826/1142217
-  def __init__(self, f):
-    self.f = f
-    self.memo = {}
-  def __call__(self, *args):
-    if not args in self.memo:
-      self.memo[args] = self.f(*args)
-    return self.memo[args]
-
-clebsch = Memoize(clebsch)
-y20_matrix_element = Memoize(y20_matrix_element)
-r2_matrix_element = Memoize(r2_matrix_element)
-ln_fac = Memoize(ln_fac)
-ln_gamma = Memoize(ln_gamma)
-  
-#------------------------------------------------
-
-main()
