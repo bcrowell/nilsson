@@ -4,7 +4,7 @@ Functions for computing the Nilsson Hamiltonian.
 
 #-----------------------------------------------------------------------------------------------
 
-import math,numpy,sympy
+import math,numpy,sympy,scipy.special
 from sympy.physics.quantum.cg import CG
 
 import util

@@ -1,0 +1,26 @@
+#!/usr/bin/python3
+
+"""
+Test suite.
+"""
+
+import math,numpy,sympy
+from sympy.physics.quantum.cg import CG
+
+import util
+import hamiltonian
+
+def main():
+  do_tests()
+
+def do_tests():
+  test_equal(math.exp(hamiltonian.ln_fac(0)),1,'0! =1')
+  test_equal(math.exp(hamiltonian.ln_fac(1)),1,'1! =1')
+  test_equal(math.exp(hamiltonian.ln_fac(4)),24,'4! =24')
+  test_equal(hamiltonian.ln_gamma(7.0),hamiltonian.ln_gamma(8.0)-math.log(7),'Gamma(7)=Gamma*8)/7')
+
+def test_equal(x,y,message):
+  if abs(x-y)>1.0e-14:
+    raise Exception('test failed '+message)
+
+main()

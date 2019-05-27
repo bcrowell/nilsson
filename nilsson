@@ -4,9 +4,6 @@
 An implementation of the Nilsson model of nuclear structure for deformed nuclei.
 """
 
-import math,numpy,sympy
-from sympy.physics.quantum.cg import CG
-
 import util
 import hamiltonian
 
