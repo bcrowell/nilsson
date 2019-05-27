@@ -24,14 +24,6 @@ def main():
   for i in range(n_states):
     print(evals[i])
 
-def eigen(a):
-  eigenvalues, eigenvectors = numpy.linalg.eig(a) # https://docs.scipy.org/doc/numpy/reference/generated/numpy.linalg.eig.html
-  # Now sort them, https://stackoverflow.com/a/50562995/1142217
-  idx = numpy.argsort(eigenvalues)
-  eigenvalues = eigenvalues[idx]
-  eigenvectors = eigenvectors[:,idx]
-  return (eigenvalues, eigenvectors)
-
 def hamiltonian(space,pars,index,states):
   """
   Returns the Hamiltonian matrix, with matrix elements in units of omega0.
@@ -42,9 +34,21 @@ def hamiltonian(space,pars,index,states):
   delta = pars['delta']
   n_states = len(states)
   ham = numpy.zeros(shape=(n_states,n_states)) # hamiltonian
+  c1 = 2.0*kappa
+  c2 = mu*kappa
   for i in range(n_states):
     n,l,ml,ms = states[i]
-    ham[i,i] = ham[i,i]+1.5+n
+    ham[i,i] = ham[i,i] + 1.5+n -c2*(l*(l+1)-0.5*n*(n+3)) -c1*ms*ml   # 3/2+N and l^2 terms, plus diagonal part of spin-orbit term
+    # off-diagonal part of spin-orbit:
+    for j in range(n_states):
+      n2,l2,ml2,ms2 = states[j]
+      if n2!=n:
+        continue # Check this...? I think this is right, should vanish unless the N's are equal, because radial w.f. are orthogonal.
+      if l2!=l:
+        continue
+      for sign in range(-1,1+1,2):
+        if ml+sign==ml2 and ms==-sign and ms2==sign:
+          ham[i,j] = ham[i,j]+0.5*math.sqrt((l-sign*ml)*(l+sign*ml+1))
   return ham
 
 def enumerate_states(space):
@@ -66,5 +70,14 @@ def enumerate_states(space):
             i = i+1
   return index
 
+def eigen(a):
+  eigenvalues, eigenvectors = numpy.linalg.eig(a) # https://docs.scipy.org/doc/numpy/reference/generated/numpy.linalg.eig.html
+  # Now sort them, https://stackoverflow.com/a/50562995/1142217
+  idx = numpy.argsort(eigenvalues)
+  eigenvalues = eigenvalues[idx]
+  eigenvectors = eigenvectors[:,idx]
+  return (eigenvalues, eigenvectors)
+
+#------------------------------------------------
 
 main()
