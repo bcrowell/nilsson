@@ -4,7 +4,7 @@
 An implementation of the Nilsson model of nuclear structure for deformed nuclei.
 """
 
-import numpy,sympy
+import math,numpy,sympy
 from sympy.physics.quantum.cg import CG
 
 def main():
@@ -30,7 +30,8 @@ def do_nilsson():
 
 def hamiltonian(space,pars,index,states):
   """
-  Returns the Hamiltonian matrix, with matrix elements in units of omega0.
+  Returns the Hamiltonian matrix, with matrix elements in units of omega00 (not omega0, which has a second-order dependence
+  on deformation).
   """
   n_max,omega,parity = space
   kappa = pars['kappa']
@@ -40,6 +41,8 @@ def hamiltonian(space,pars,index,states):
   ham = numpy.zeros(shape=(n_states,n_states)) # hamiltonian
   c1 = 2.0*kappa
   c2 = mu*kappa
+  #     We apply this at the end to the entire hamiltonian.
+  # 3/2+N, l^2, and spin-orbit terms:
   for i in range(n_states):
     n,l,ml,ms = states[i]
     ham[i,i] = ham[i,i] + 1.5+n -c2*(l*(l+1)-0.5*n*(n+3)) -c1*ms*ml   # 3/2+N and l^2 terms, plus diagonal part of spin-orbit term
@@ -53,6 +56,23 @@ def hamiltonian(space,pars,index,states):
       for sign in range(-1,1+1,2):
         if ml+sign==ml2 and ms==-sign and ms2==sign:
           ham[i,j] = ham[i,j]+0.5*math.sqrt((l-sign*ml)*(l+sign*ml+1))
+  # deformation term:
+  def_con = -(4.0/3.0)*math.sqrt(math.pi/5.0)*delta # proportionality constant for r^2Y20 term
+  for i in range(n_states):
+    n,l,ml,ms = states[i]
+    for j in range(n_states):
+      n2,l2,ml2,ms2 = states[j]
+      # matrix elements of deformation term
+      if j<=i:
+        z = r2_matrix_element(n,l,ml,ms,n2,l2,ml2,ms2)*y20_matrix_element(n,l,ml,ms,n2,l2,ml2,ms2)
+        # ... I assume multiplying these is the right thing to do, since the integrals are separable,
+        ham[i,j] = ham[i,j] + z
+        ham[j,i] = ham[j,i] + z
+  omega0 = (1-(4.0/3.0)*delta**2-(16.0/27.0)*delta**3)**(-1.0/6.0)
+  # ... rescaled from omega00=1 for volume conservation
+  for i in range(n_states):
+    for j in range(n_states):
+      ham[i,j] = ham[i,j]*omega0
   return ham
 
 def enumerate_states(space):
@@ -79,7 +99,7 @@ def y20_matrix_element(n,l,ml,ms,n2,l2,ml2,ms2):
   Compute the matrix element <l2 ml2 | Y20 | l ml>.
   """
   # https://physics.stackexchange.com/questions/10039/integral-of-the-product-of-three-spherical-harmonics
-  if not (ml==ml2 and ms==ms2 and math.abs(l-l2)<=2 and (l-l2)%2==0 and math.abs(n-n2)==2):
+  if not (ml==ml2 and ms==ms2 and abs(l-l2)<=2 and (l-l2)%2==0 and abs(n-n2)==2):
     return 0.0
   # Beyond this point, we don't look at ms or ms2 anymore, so all spins are integers.
   x = math.sqrt((5.0/(4.0*math.pi)) * ((2*l+1)/(2*l2+1)))
@@ -93,8 +113,10 @@ def r2_matrix_element(n,l,ml,ms,n2,l2,ml2,ms2):
   Compute the matrix element <n2 l2 | r^2 | n l>.
   """
   # nuclear.fis.ucm.es/PDFN/documentos/Nilsson_Doct.pdf
-  if ml!=ml2 or ms!=ms2 or math.abs(n-n2)!=0:
+  if ml!=ml2 or ms!=ms2 or abs(n-n2)!=0:
     return 0.0
+  if n==n2:
+    return n+1.5 # special case for efficiency
   # Beyond this point, we don't look at ms or ms2 anymore, so all spins are integers. Only p is a half-integer. mu, nu, d, sigma are integera
   p = 0.5*(l+l2+3)
   mu = p-l2-0.5
@@ -110,8 +132,8 @@ def r2_matrix_element(n,l,ml,ms,n2,l2,ml2,ms2):
   result = sum*math.exp(0.5*ln_stuff+ln_stuff2)
   if (d+d2)%2!=0:
     result = -result
-  # ECM has a (unitful?) factor of b^2, but that factor doesn't appear in their sample expressions for <N|...|N+2>?
-  # Their document never seems to define b.
+  # ECM has a (unitful?) factor of b^2, but doesn't include that factor in their sample expressions for <N|...|N+2>.
+  # They define b as sqrt(hbar/m*omega0), so when we compute energies in units of hbar*omega0, this should not be an issue.
   return result
 
 def ln_fac(n):
