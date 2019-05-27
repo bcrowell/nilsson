@@ -5,5 +5,6 @@ An implementation of the Nilsson model of the nuclear structure of deformed nucl
 
 Dependencies:
 
-apt-get install python3-numpy
+apt-get install python3-numpy python3-sympy
+
 
