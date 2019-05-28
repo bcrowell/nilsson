@@ -35,8 +35,9 @@ def do_tests():
 
 
   # matrix elements of r^2
-  # Test using some special cases from ECM doc.
+  # Test using some special cases from ECM doc. Inputs are n,l,ml,ms, n2,l2,ml2,ms2.
   test_equal(hamiltonian.r2_matrix_element(0,0,0,1, 0,0,0,1),1.5,'<00|r^2|00>=3/2')
+  test_equal(hamiltonian.r2_matrix_element(1,1,1,1, 1,1,1,1),2.5,'<11|r^2|11>=5/2')
   test_equal(hamiltonian.r2_matrix_element(2,0,0,1, 2,0,0,1),3.5,'<20|r^2|20>=7/2')
   test_equal(hamiltonian.r2_matrix_element(2,2,0,1, 2,2,0,1),3.5,'<22|r^2|22>=7/2')
   test_equal(hamiltonian.r2_matrix_element(2,0,0,1, 2,2,0,1),-2*math.sqrt(2.5),'<20|r^2|22>=-2sqrt(2.5)') # ECM's sign seems wrong
@@ -45,25 +46,20 @@ def do_tests():
   # Test runs of the full model. Check against some closed-form results from ECM doc.
   # Inputs are n_max,Omega*2,parity,{...}.
 
-  delta = 0.01
+  delta = 0.1
   full_nilsson(0,1,0, 0.0,   0,0,(lambda eta : 0.0),         's1/2, no deformation, ground state energy=1.5')
   full_nilsson(0,1,0, delta, 0,0,(lambda eta : 0.0),         's1/2, ground state energy=1.5')
+  full_nilsson(1,3,1, 0.0,   0,1,(lambda eta : eta/3.0-1.0), 'p3/2, no deformation')
   full_nilsson(1,3,1, delta, 0,1,(lambda eta : eta/3.0-1.0), 'p3/2')
 
-
-  result = high_level.do_nilsson(0,1,0,{'delta':delta})
-  print(result['ham'])
-  test_equal(result['evals'][0],1.5,'s1/2, ground state energy=1.5')
-
-  result = high_level.do_nilsson(1,3,1,{'delta':delta})
-  print(result['ham'])
-  test_equal(result['evals'][0],2.5,'p3/2')
-
 def full_nilsson(n_max,omega,parity,delta,i,nominal_n,th,message):
-  result = high_level.do_nilsson(n_max,omega,parity,{'delta':delta})
+  result = high_level.do_nilsson(n_max,omega,parity,{'delta':delta,'kappa':0.1}) # unphysical kappa to make math simple
+  print(result['ham']) # qwe
   got = result['evals'][i]-(1.5+nominal_n)
-  eta = result['delta']/result['kappa']
-  want = th(eta)*result['kappa']
+  delta = result['delta']
+  kappa = result['kappa']
+  eta = (delta/kappa)*hamiltonian.delta_to_omega0(delta)
+  want = th(eta)*kappa
   test_equal(got,want,message)
 
 

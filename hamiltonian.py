@@ -16,8 +16,8 @@ from util import Memoize
 
 def hamiltonian(space,pars,index,states):
   """
-  Returns the Hamiltonian matrix, with matrix elements in units of omega00 (not omega0, which has a second-order dependence
-  on deformation). When running a series of calculations with different deformations, some of the more computationally expensive
+  Returns the Hamiltonian matrix, with matrix elements in units of omega00.
+  When running a series of calculations with different deformations, some of the more computationally expensive
   parts of this calculation will automatically be memoized.
   """
   n_max,omega,parity = space
@@ -42,9 +42,10 @@ def hamiltonian(space,pars,index,states):
         continue
       for sign in range(-1,1+1,2):
         if ml+sign==ml2 and ms==-sign and ms2==sign:
-          ham[i,j] = ham[i,j]+0.5*math.sqrt((l-sign*ml)*(l+sign*ml+1))
+          ham[i,j] = ham[i,j]-c1*0.5*math.sqrt((l-sign*ml)*(l+sign*ml+1))
   # deformation term, proportional to r^2 Y20
-  def_con = -(4.0/3.0)*math.sqrt(math.pi/5.0)*delta # proportionality constant for this term
+  omega0 = delta_to_omega0(delta)
+  def_con = -omega0*(4.0/3.0)*math.sqrt(math.pi/5.0)*delta # proportionality constant for this term
   d = deformation_ham(space,states)
   for i in range(n_states):
     for j in range(n_states):
@@ -74,7 +75,8 @@ def deformation_ham(space,states):
         z = r2_matrix_element(n,l,ml,ms,n2,l2,ml2,ms2)*y20_matrix_element(n,l,ml,ms,n2,l2,ml2,ms2)
         # ... I assume multiplying these is the right thing to do, since the integrals are separable,
         ham[i,j] = ham[i,j] + z
-        ham[j,i] = ham[j,i] + z
+        if i!=j:
+          ham[j,i] = ham[j,i] + z
   return ham
 
 def enumerate_states(space):
