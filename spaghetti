@@ -8,15 +8,22 @@ import os
 import util,hamiltonian,high_level,states
 
 def main():
-  n_max = 3
+  n_max = 10
   n_def = 30 # number of deformations
   delta_lo = -0.1
   delta_hi = 0.3
-  spaghetti({'n_max':3,'n_def':30,'delta_lo':-0.1,'delta_hi':0.3,'fmt':"pdf"})
+  spaghetti({'n_max':3,'n_def':30,'delta_lo':-0.1,'delta_hi':0.6,'fmt':"svg",'n_max_scale':3,'kappa':0.08,'mu':0.0})
 
 def spaghetti(pars):
   # Mandatory parameters are n_max,n_def,delta_lo,delta_hi,fmt.
-  # fmt can be "pdf" or "svg"
+  #   n_max = highest N shell to use in the basis for the calculation
+  #   n_def = number of deformations
+  #   delta_lo,delta_hi = low and high values of the delta parameter for deformation
+  #   fmt can be "pdf" or "svg"
+  #   kappa
+  #   mu
+  # Optional parameters:
+  #   n_max_scale = highest major shell that appears on the energy axis; default is min(6,n_max)
   pars['filename'] = "nilsson."+pars['fmt']
   r = spaghetti_r_code(pars)
   with open('temp.r', 'w') as f:
@@ -26,6 +33,8 @@ def spaghetti(pars):
 
 def spaghetti_r_code(pars):
   n_max,n_def,delta_lo,delta_hi,fmt,filename = pars['n_max'],pars['n_def'],pars['delta_lo'],pars['delta_hi'],pars['fmt'],pars['filename'],
+  if not ('n_max_scale' in pars):
+    pars['n_max_scale'] = min(6,n_max)
   keys = []
   e = {} # energies
   vars = {} # variable names for lists
@@ -43,7 +52,11 @@ def spaghetti_r_code(pars):
     for parity in range(2):
       for k in range(n_def): # loop over deformations
         delta = defs[k]
-        result = high_level.do_nilsson(n_max,omega,parity,{'delta':delta})
+        p = {'delta':delta}
+        for par in ['mu','kappa']:
+          if par in pars:
+            p[par] = pars[par]
+        result = high_level.do_nilsson(n_max,omega,parity,p)
         n_states = result['n_states']
         for i in range(n_states):
           key = (omega,parity,i)
@@ -63,7 +76,8 @@ def spaghetti_r_code(pars):
         s = list_to_r_code(e[key])
         e_lo = min(e_lo,min(e[key]))
         r = r + (vars[key]+" <- "+s+" # "+states.describe_omega_parity(omega,parity)+" "+str(i)+"\n")
-  r = r + 'plot('+list_to_r_code([delta_lo,delta_hi])+','+list_to_r_code([e_lo,e_hi])+',type="n",xlab="delta",ylab="E (hbar*omega)")'+"\n"
+  title = "kappa="+str(pars['kappa'])+" mu="+str(pars['mu'])
+  r = r + 'plot('+list_to_r_code([delta_lo,delta_hi])+','+list_to_r_code([e_lo,e_hi])+',type="n",xlab="delta",ylab="E (hbar*omega)",main="'+title+'")'+"\n"
   for key in vars:
     r = r+("lines(delta,"+vars[key]+")"+"\n")
   r = r+"garbage <- dev.off()\n"
