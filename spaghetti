@@ -12,18 +12,20 @@ def main():
   n_def = 30 # number of deformations
   delta_lo = -0.1
   delta_hi = 0.3
-  spaghetti(n_max,n_def,delta_lo,delta_hi,"pdf")
+  spaghetti({'n_max':3,'n_def':30,'delta_lo':-0.1,'delta_hi':0.3,'fmt':"pdf"})
 
-def spaghetti(n_max,n_def,delta_lo,delta_hi,fmt):
+def spaghetti(pars):
+  # Mandatory parameters are n_max,n_def,delta_lo,delta_hi,fmt.
   # fmt can be "pdf" or "svg"
-  filename = "nilsson."+fmt
-  r = spaghetti_r_code(n_max,n_def,delta_lo,delta_hi,fmt,filename)
+  pars['filename'] = "nilsson."+pars['fmt']
+  r = spaghetti_r_code(pars)
   with open('temp.r', 'w') as f:
     f.write(r)
   os.system("R --quiet --slave --no-save --no-restore-data <temp.r")  
-  print("A spaghetti plot was written to "+filename)
+  print("A spaghetti plot was written to "+pars['filename'])
 
-def spaghetti_r_code(n_max,n_def,delta_lo,delta_hi,fmt,filename):
+def spaghetti_r_code(pars):
+  n_max,n_def,delta_lo,delta_hi,fmt,filename = pars['n_max'],pars['n_def'],pars['delta_lo'],pars['delta_hi'],pars['fmt'],pars['filename'],
   keys = []
   e = {} # energies
   vars = {} # variable names for lists
