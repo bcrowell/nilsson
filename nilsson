@@ -10,7 +10,7 @@ def main():
   run_nilsson()
 
 def run_nilsson():
-  n_max = 5
+  n_max = 10
   omega = 7 # 7/2-
   parity = 1
   result = high_level.do_nilsson(n_max,omega,parity,{'delta':0.2})

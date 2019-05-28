@@ -73,7 +73,7 @@ def deformation_ham(space,states):
     for j in range(n_states):
       n2,l2,ml2,ms2 = states[j]
       # matrix elements of deformation term
-      if j<=i:
+      if j<=i and abs(l-l2)<=2:
         z = r2_matrix_element(n,l,ml,ms,n2,l2,ml2,ms2)*y20_matrix_element(n,l,ml,ms,n2,l2,ml2,ms2)
         # ... I assume multiplying these is the right thing to do, since the integrals are separable,
         ham[i,j] = ham[i,j] + z
@@ -142,6 +142,10 @@ def r2_matrix_element(n,l,ml,ms,n2,l2,ml2,ms2):
     term = math.exp(ln_term)
     sum = sum + term
   ln_stuff = ln_fac(d2-1)+ln_fac(d-1)-(ln_gamma(d2+l2+0.5)+ln_gamma(d+l+0.5))
+  if mu<0 or nu<0:
+    print("negative mu or nu in r2_matrix_element -- this shoudln't happen")
+    print("p,d,mu,nu=",p,d,mu,nu)
+    print("n,l,ml,ms,    n2,l2,ml2,ms2=",n,l,ml,ms,"    ",n2,l2,ml2,ms2)
   ln_stuff2 = ln_fac(mu)+ln_fac(nu)
   result = sum*math.exp(0.5*ln_stuff+ln_stuff2)
   if (d+d2)%2!=0:
