@@ -43,7 +43,6 @@ def hamiltonian(space,pars,index,states):
       if l2!=l:
         continue
       for sign in range(-1,1+1,2):
-        print("n,l,ml,ms  n2,l2,ml2,ms2  sign = ",n,l,ml,ms,"  ",n2,l2,ml2,ms2,"  ",sign) # qwe
         if ml+sign==ml2 and ms==sign and ms2==-sign:
           ham[i,j] = ham[i,j]-c1*0.5*math.sqrt((l-sign*ml)*(l+sign*ml+1))
   # deformation term, proportional to r^2 Y20
