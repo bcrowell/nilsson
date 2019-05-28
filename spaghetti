@@ -4,28 +4,69 @@
 Make a spaghetti plot.
 """
 
-import util,hamiltonian,high_level
+import os
+import util,hamiltonian,high_level,states
 
 def main():
-  run_nilsson()
-
-def run_nilsson():
   n_max = 2
   n_def = 3 # number of deformations
   delta_lo = -0.1
   delta_hi = 0.3
-  e = {}
-  for omega in range(2*n_max+1):
+  spaghetti(n_max,n_def,delta_lo,delta_hi)
+
+def spaghetti(n_max,n_def,delta_lo,delta_hi):
+  r = spaghetti_r_code(n_max,n_def,delta_lo,delta_hi)
+  with open('temp.r', 'w') as f:
+    f.write(r)
+  os.system("R --quiet --slave --no-save --no-restore-data <temp.r")  
+
+def spaghetti_r_code(n_max,n_def,delta_lo,delta_hi):
+  keys = []
+  e = {} # energies
+  vars = {} # variable names for lists
+  defs = [] # list of deformations
+  for k in range(n_def): # loop over deformations
+    x = float(k)/float(n_def-1)
+    delta = delta_lo+(delta_hi-delta_lo)*x
+    defs.append(delta)
+  r = '' # generate R code
+  r = r + 'pdf("nilsson.pdf")'+"\n"
+  r = r + ("delta <-"+list_to_r_code(defs))+"\n"
+  e_lo = 1.5
+  e_hi = 1.5+n_max
+  for omega in range(1,2*n_max+1,2):
     for parity in range(2):
       for k in range(n_def): # loop over deformations
-        x = float(k)/float(n_def-1)
-        delta = delta_lo+(delta_hi-delta_lo)*x
+        delta = defs[k]
         result = high_level.do_nilsson(n_max,omega,parity,{'delta':delta})
         n_states = result['n_states']
         for i in range(n_states):
           key = (omega,parity,i)
+          var = "e"+str(omega)+"_"+str(parity)+"_"+str(i)
           if not key in e:
+            keys.append(key)
             e[key] = []
+            vars[key] = var
           e[key].append(result['evals'][i])
+  for omega in range(1,2*n_max+1,2):
+    for parity in range(2):
+      r = r + ("#----------------------------------- "+states.describe_omega_parity(omega,parity)+" -----------------------------------\n")
+      for key in keys:
+        if key[0]!=omega or key[1]!=parity:
+          continue
+        i = key[2]
+        s = list_to_r_code(e[key])
+        e_lo = min(e_lo,min(e[key]))
+        r = r + (vars[key]+" <- "+s+" # "+states.describe_omega_parity(omega,parity)+" "+str(i)+"\n")
+  r = r + 'plot('+list_to_r_code([delta_lo,delta_hi])+','+list_to_r_code([e_lo,e_hi])+',type="n",xlab="delta",ylab="E (hbar*omega)")'+"\n"
+  for key in vars:
+    r = r+("lines(delta,"+vars[key]+")"+"\n")
+  r = r+"garbage <- dev.off()\n"
+  return r
+
+
+def list_to_r_code(a):
+  s = ",".join("%7.4f" % x for x in a)
+  return "c("+s+")"
 
 main()
