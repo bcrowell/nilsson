@@ -8,19 +8,22 @@ import os
 import util,hamiltonian,high_level,states
 
 def main():
-  n_max = 2
-  n_def = 3 # number of deformations
+  n_max = 3
+  n_def = 30 # number of deformations
   delta_lo = -0.1
   delta_hi = 0.3
-  spaghetti(n_max,n_def,delta_lo,delta_hi)
+  spaghetti(n_max,n_def,delta_lo,delta_hi,"pdf")
 
-def spaghetti(n_max,n_def,delta_lo,delta_hi):
-  r = spaghetti_r_code(n_max,n_def,delta_lo,delta_hi)
+def spaghetti(n_max,n_def,delta_lo,delta_hi,fmt):
+  # fmt can be "pdf" or "svg"
+  filename = "nilsson."+fmt
+  r = spaghetti_r_code(n_max,n_def,delta_lo,delta_hi,fmt,filename)
   with open('temp.r', 'w') as f:
     f.write(r)
   os.system("R --quiet --slave --no-save --no-restore-data <temp.r")  
+  print("A spaghetti plot was written to "+filename)
 
-def spaghetti_r_code(n_max,n_def,delta_lo,delta_hi):
+def spaghetti_r_code(n_max,n_def,delta_lo,delta_hi,fmt,filename):
   keys = []
   e = {} # energies
   vars = {} # variable names for lists
@@ -30,7 +33,7 @@ def spaghetti_r_code(n_max,n_def,delta_lo,delta_hi):
     delta = delta_lo+(delta_hi-delta_lo)*x
     defs.append(delta)
   r = '' # generate R code
-  r = r + 'pdf("nilsson.pdf")'+"\n"
+  r = r + fmt+'("'+filename+'")'+"\n"
   r = r + ("delta <-"+list_to_r_code(defs))+"\n"
   e_lo = 1.5
   e_hi = 1.5+n_max
