@@ -1,7 +1,7 @@
 nilsson
 =======
 
-An implementation of the Nilsson model of the nuclear structure of deformed nuclei.
+An implementation of the [Nilsson model](https://en.wikipedia.org/wiki/Nilsson_model) of the nuclear structure of deformed nuclei.
 
 Dependencies:
 

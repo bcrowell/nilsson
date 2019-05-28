@@ -159,7 +159,7 @@ def ln_fac(n):
   if n<0:
     raise Exception('negative input in ln_fac')
   if not util.has_integer_value(n): 
-    raise Exception('negative input in ln_fac')
+    raise Exception(non-integer input in ln_fac')
   return scipy.special.gammaln(n+1)
 
 @Memoize
@@ -195,4 +195,5 @@ def clebsch2(j1,m1,j2,m2,j3,m3):
   # This is kind of silly, using a symbolic math package to compute these things numerically, but I couldn't find a convenient
   # numerical routine for this that was licensed appropriately and packaged for ubuntu.
   # Performance is actually fine, because this is memoized. We take a ~1 second hit in startup time just from loading sympy.
+  # Looking for a better alternative: https://scicomp.stackexchange.com/questions/32744/plug-and-go-clebsch-gordan-computation-in-python
   return CG(sympy.S(j1)/2,sympy.S(m1)/2,sympy.S(j2)/2,sympy.S(m2)/2,sympy.S(j3)/2,sympy.S(m3)/2).doit().evalf()
