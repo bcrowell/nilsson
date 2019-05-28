@@ -159,7 +159,7 @@ def ln_fac(n):
   if n<0:
     raise Exception('negative input in ln_fac')
   if not util.has_integer_value(n): 
-    raise Exception(non-integer input in ln_fac')
+    raise Exception('non-integer input in ln_fac')
   return scipy.special.gammaln(n+1)
 
 @Memoize

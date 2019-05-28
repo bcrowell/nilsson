@@ -1,0 +1,31 @@
+#!/usr/bin/python3
+
+"""
+Make a spaghetti plot.
+"""
+
+import util,hamiltonian,high_level
+
+def main():
+  run_nilsson()
+
+def run_nilsson():
+  n_max = 2
+  n_def = 3 # number of deformations
+  delta_lo = -0.1
+  delta_hi = 0.3
+  e = {}
+  for omega in range(2*n_max+1):
+    for parity in range(2):
+      for k in range(n_def): # loop over deformations
+        x = float(k)/float(n_def-1)
+        delta = delta_lo+(delta_hi-delta_lo)*x
+        result = high_level.do_nilsson(n_max,omega,parity,{'delta':delta})
+        n_states = result['n_states']
+        for i in range(n_states):
+          key = (omega,parity,i)
+          if not key in e:
+            e[key] = []
+          e[key].append(result['evals'][i])
+
+main()
