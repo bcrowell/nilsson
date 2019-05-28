@@ -47,15 +47,20 @@ def do_tests():
   # Inputs are n_max,Omega*2,parity,{...}.
 
   delta = 0.1
-  full_nilsson(0,1,0, 0.0,   0,0,(lambda eta : 0.0),         's1/2, no deformation, ground state energy=1.5')
-  full_nilsson(0,1,0, delta, 0,0,(lambda eta : 0.0),         's1/2, ground state energy=1.5')
-  full_nilsson(1,3,1, 0.0,   0,1,(lambda eta : eta/3.0-1.0), 'p3/2, no deformation')
-  full_nilsson(1,3,1, delta, 0,1,(lambda eta : eta/3.0-1.0), 'p3/2')
+  half_nilsson(0,1, 0.0,   0,(lambda eta : 0.0),         's1/2, no deformation, ground state energy=1.5')
+  half_nilsson(0,1, delta, 0,(lambda eta : 0.0),         's1/2, ground state energy=1.5')
+  half_nilsson(1,1, 0.0,   0,(lambda eta :        -1.0), 'p3/2, Omega=1/2, no deformation')
+  half_nilsson(1,3, 0.0,   0,(lambda eta :        -1.0), 'p3/2, Omega=3/2, no deformation')
+  half_nilsson(1,1, 0.0,   1,(lambda eta :         2.0), 'p1/2, Omega=1/2, no deformation')
+  half_nilsson(1,3, delta, 0,(lambda eta : eta/3.0-1.0), 'p3/2')
+  half_nilsson(1,1, delta, 1,(lambda eta : 0.5*(1-eta/3.0-math.sqrt(eta*eta+2.0*eta+9.0))), 'p1/2')
 
-def full_nilsson(n_max,omega,parity,delta,i,nominal_n,th,message):
-  result = high_level.do_nilsson(n_max,omega,parity,{'delta':delta,'kappa':0.1}) # unphysical kappa to make math simple
+def half_nilsson(n,omega, delta, i,th,message):
+  # test with only a single N shell (as opposed to a ... full ... Nilsson)
+  parity = n%2
+  result = high_level.do_nilsson(n,omega,parity,{'delta':delta,'kappa':0.1}) # unphysical kappa to make math simple
   print(result['ham']) # qwe
-  got = result['evals'][i]-(1.5+nominal_n)
+  got = result['evals'][i]-(1.5+n)
   delta = result['delta']
   kappa = result['kappa']
   eta = (delta/kappa)*hamiltonian.delta_to_omega0(delta)

@@ -35,13 +35,16 @@ def hamiltonian(space,pars,index,states):
     ham[i,i] = ham[i,i] + 1.5+n -c2*(l*(l+1)-0.5*n*(n+3)) -c1*ml*(0.5*ms)   # 3/2+N and l^2 terms, plus diagonal part of spin-orbit term
     # off-diagonal part of spin-orbit:
     for j in range(n_states):
+      if j==i:
+        continue # already did diagonal elements
       n2,l2,ml2,ms2 = states[j]
       if n2!=n:
         continue # Check this...? I think this is right, should vanish unless the N's are equal, because radial w.f. are orthogonal.
       if l2!=l:
         continue
       for sign in range(-1,1+1,2):
-        if ml+sign==ml2 and ms==-sign and ms2==sign:
+        print("n,l,ml,ms  n2,l2,ml2,ms2  sign = ",n,l,ml,ms,"  ",n2,l2,ml2,ms2,"  ",sign) # qwe
+        if ml+sign==ml2 and ms==sign and ms2==-sign:
           ham[i,j] = ham[i,j]-c1*0.5*math.sqrt((l-sign*ml)*(l+sign*ml+1))
   # deformation term, proportional to r^2 Y20
   omega0 = delta_to_omega0(delta)
@@ -91,6 +94,8 @@ def enumerate_states(space):
   i = 0
   for n in range(parity,n_max+1,2):
     for l in range(0,n+1):
+      if (n-l)%2!=0: # parity
+        continue
       for ml in range(-l,l+1): # m_l
         for ms in range(-1,1+1,2): # two times m_s
           if 2*ml+ms==omega:
